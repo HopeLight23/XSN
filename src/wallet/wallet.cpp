@@ -2938,6 +2938,26 @@ bool CWallet::SelectCoins(const CAmount& nTargetValue, set<pair<const CWalletTx*
     vector<COutput> vCoins;
     AvailableCoins(vCoins, true, coinControl, false, nCoinType, fUseInstantSend);
 
+    //COutput out;
+
+    std::set<CScript> setOwnerTPoSAddresses;
+
+    for ( const auto &ownerContracts : tposOwnerContracts )
+    {
+        setOwnerTPoSAddresses.insert(GetScriptForDestination((ownerContracts.second.tposAddress.Get())));
+    }
+
+
+    std::sort(vCoins.begin(), vCoins.end(), [&setOwnerTPoSAddresses](COutput left, COutput right) {
+        return setOwnerTPoSAddresses.count(right.tx->vout[left.i].scriptPubKey);
+    });
+
+    //    std::sort(std::begin(), std::end(), [](COutput left, COutput right) {
+    //        return setOwnerTPoSAddresses.count(right.tx->vout[out.i].scriptPubKey);
+    //    });
+
+
+
     // coin control -> return all selected outputs (we want all selected to go into the transaction for sure)
     if (coinControl && coinControl->HasSelected() && !coinControl->fAllowOtherInputs)
     {
